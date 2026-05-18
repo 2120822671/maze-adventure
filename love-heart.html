@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💖 爱心</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            overflow: hidden;
+        }
+        
+        .heart-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            cursor: pointer;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        
+        .heart {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b6b, #ff4757, #ff69b4, #ff1493);
+            clip-path: path('M100,170 C20,130 -10,80 20,50 C50,20 90,30 100,60 C110,30 150,20 180,50 C210,80 180,130 100,170 Z');
+            animation: heartbeat 1.2s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(255, 107, 107, 0.8));
+        }
+        
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            15% { transform: scale(1.15); }
+            30% { transform: scale(1); }
+            45% { transform: scale(1.1); }
+        }
+        
+        .heart::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 25%;
+            width: 30%;
+            height: 30%;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            filter: blur(5px);
+        }
+        
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ff69b4;
+            border-radius: 50%;
+            animation: particle-float 4s ease-in-out infinite;
+            opacity: 0;
+        }
+        
+        @keyframes particle-float {
+            0% { opacity: 0; transform: translate(0, 0) scale(0); }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(1); }
+        }
+        
+        .particle:nth-child(1) { --tx: -60px; --ty: -80px; animation-delay: 0s; background: #ff6b6b; }
+        .particle:nth-child(2) { --tx: 70px; --ty: -60px; animation-delay: 0.5s; background: #ff4757; }
+        .particle:nth-child(3) { --tx: -80px; --ty: 20px; animation-delay: 1s; background: #ff69b4; }
+        .particle:nth-child(4) { --tx: 90px; --ty: 30px; animation-delay: 1.5s; background: #ff1493; }
+        .particle:nth-child(5) { --tx: -40px; --ty: -100px; animation-delay: 2s; background: #ff6b6b; }
+        .particle:nth-child(6) { --tx: 50px; --ty: -90px; animation-delay: 2.5s; background: #ff4757; }
+        .particle:nth-child(7) { --tx: -90px; --ty: -40px; animation-delay: 3s; background: #ff69b4; }
+        .particle:nth-child(8) { --tx: 80px; --ty: -20px; animation-delay: 3.5s; background: #ff1493; }
+        
+        .message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 4rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 20px #ff69b4, 0 0 40px #ff1493, 0 0 60px #ff6b6b;
+            z-index: 100;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        
+        .message.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            animation: text-glow 0.5s ease-in-out infinite alternate;
+        }
+        
+        @keyframes text-glow {
+            from { text-shadow: 0 0 20px #ff69b4, 0 0 40px #ff1493, 0 0 60px #ff6b6b; }
+            to { text-shadow: 0 0 30px #ff69b4, 0 0 60px #ff1493, 0 0 90px #ff6b6b, 0 0 120px #ff4757; }
+        }
+        
+        .hearts-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 50;
+        }
+        
+        .falling-heart {
+            position: absolute;
+            font-size: 2rem;
+            animation: fall linear forwards;
+            opacity: 0;
+        }
+        
+        @keyframes fall {
+            0% { opacity: 0; transform: translateY(-100px) rotate(0deg); }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(100vh) rotate(360deg); }
+        }
+        
+        .glow-ring {
+            position: absolute;
+            width: 120%;
+            height: 120%;
+            top: -10%;
+            left: -10%;
+            border: 3px solid transparent;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #ff1493, #ff69b4) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: ring-rotate 3s linear infinite;
+            opacity: 0.5;
+        }
+        
+        @keyframes ring-rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #fff;
+            border-radius: 50%;
+            animation: sparkle 2s ease-in-out infinite;
+        }
+        
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+        
+        .sparkle:nth-child(1) { top: 10%; left: 20%; animation-delay: 0s; }
+        .sparkle:nth-child(2) { top: 30%; left: 80%; animation-delay: 0.3s; }
+        .sparkle:nth-child(3) { top: 60%; left: 10%; animation-delay: 0.6s; }
+        .sparkle:nth-child(4) { top: 80%; left: 70%; animation-delay: 0.9s; }
+        .sparkle:nth-child(5) { top: 20%; left: 50%; animation-delay: 1.2s; }
+        .sparkle:nth-child(6) { top: 70%; left: 30%; animation-delay: 1.5s; }
+    </style>
+</head>
+<body>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    
+    <div class="heart-container" id="heartContainer">
+        <div class="glow-ring"></div>
+        <div class="particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
+        <div class="heart"></div>
+    </div>
+    
+    <div class="message" id="message">彭左明WC</div>
+    <div class="hearts-rain" id="heartsRain"></div>
+    
+    <script>
+        const heartContainer = document.getElementById('heartContainer');
+        const message = document.getElementById('message');
+        const heartsRain = document.getElementById('heartsRain');
+        let clicked = false;
+        
+        function createFallingHeart() {
+            const heart = document.createElement('div');
+            heart.className = 'falling-heart';
+            heart.innerHTML = ['💖', '💕', '💗', '💓', '💝', '❤️', '💘', '💝'][Math.floor(Math.random() * 8)];
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            heart.style.fontSize = (Math.random() * 1.5 + 1) + 'rem';
+            heartsRain.appendChild(heart);
+            
+            setTimeout(() => {
+                heart.remove();
+            }, 4000);
+        }
+        
+        heartContainer.addEventListener('click', function() {
+            if (clicked) return;
+            clicked = true;
+            
+            message.classList.add('show');
+            
+            let heartCount = 0;
+            const heartInterval = setInterval(() => {
+                createFallingHeart();
+                heartCount++;
+                if (heartCount > 30) {
+                    clearInterval(heartInterval);
+                }
+            }, 100);
+            
+            setTimeout(() => {
+                message.classList.remove('show');
+                clicked = false;
+            }, 5000);
+        });
+        
+        setInterval(() => {
+            if (Math.random() > 0.7) {
+                createFallingHeart();
+            }
+        }, 500);
+    </script>
+</body>
+</html>
