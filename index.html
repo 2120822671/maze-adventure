@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>迷宫冒险 - Maze Adventure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        .player-pulse {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        #mazeCanvas {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 w-full max-w-2xl">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">🎮 迷宫冒险</h1>
+        
+        <div id="statusBar" class="flex flex-wrap justify-center gap-4 mb-4 text-sm">
+            <div class="bg-indigo-100 px-4 py-2 rounded-full">
+                <span class="text-gray-600">难度：</span>
+                <span id="difficultyDisplay" class="font-semibold text-indigo-600">简单</span>
+            </div>
+            <div class="bg-green-100 px-4 py-2 rounded-full">
+                <span class="text-gray-600">用时：</span>
+                <span id="timerDisplay" class="font-semibold text-green-600">00:00</span>
+            </div>
+            <div class="bg-orange-100 px-4 py-2 rounded-full">
+                <span class="text-gray-600">步数：</span>
+                <span id="stepsDisplay" class="font-semibold text-orange-600">0</span>
+            </div>
+        </div>
+        
+        <div class="flex justify-center mb-4">
+            <canvas id="mazeCanvas" class="border-4 border-gray-300 rounded-xl"></canvas>
+        </div>
+        
+        <div id="controls" class="text-center text-gray-500 text-sm mb-4">
+            <p>⌨️ WASD / 方向键 移动 &nbsp;|&nbsp; 👆 触摸滑动</p>
+        </div>
+        
+        <div class="flex justify-center gap-4">
+            <button id="newGameBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 shadow-lg">
+                🆕 新游戏
+            </button>
+            <button id="restartBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 shadow-lg">
+                🔄 重新开始
+            </button>
+        </div>
+    </div>
+
+    <div id="difficultyModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-2xl p-6 shadow-2xl max-w-sm w-full mx-4">
+            <h2 class="text-xl font-bold text-center text-gray-800 mb-4">选择难度</h2>
+            <div class="flex flex-col gap-3">
+                <button data-difficulty="easy" class="difficulty-btn bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105">
+                    🌱 简单 (15×15)
+                </button>
+                <button data-difficulty="medium" class="difficulty-btn bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105">
+                    🌿 中等 (21×21)
+                </button>
+                <button data-difficulty="hard" class="difficulty-btn bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105">
+                    🌳 困难 (31×31)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="winModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full mx-4 text-center">
+            <h2 class="text-3xl font-bold text-green-600 mb-4">🎉 恭喜通关！</h2>
+            <div class="text-gray-700 mb-6 space-y-2">
+                <p>用时：<span id="finalTime" class="font-bold text-green-600">00:00</span></p>
+                <p>步数：<span id="finalSteps" class="font-bold text-orange-600">0</span></p>
+            </div>
+            <button id="playAgainBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white px-8 py-3 rounded-xl font-semibold transition-all hover:scale-105 shadow-lg">
+                再玩一次
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const stepsDisplay = document.getElementById('stepsDisplay');
+        const difficultyDisplay = document.getElementById('difficultyDisplay');
+        const difficultyModal = document.getElementById('difficultyModal');
+        const winModal = document.getElementById('winModal');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        const finalTime = document.getElementById('finalTime');
+        const finalSteps = document.getElementById('finalSteps');
+
+        const DIFFICULTY_CONFIG = {
+            easy: { gridSize: 15, cellSize: 30 },
+            medium: { gridSize: 21, cellSize: 25 },
+            hard: { gridSize: 31, cellSize: 20 }
+        };
+
+        const DIRECTIONS = [
+            { dx: 0, dy: -2 },
+            { dx: 2, dy: 0 },
+            { dx: 0, dy: 2 },
+            { dx: -2, dy: 0 }
+        ];
+
+        let currentDifficulty = 'easy';
+        let maze = [];
+        let gridSize = 15;
+        let cellSize = 30;
+        let playerX = 1;
+        let playerY = 1;
+        let endX, endY;
+        let steps = 0;
+        let timerInterval = null;
+        let elapsedSeconds = 0;
+        let gameStarted = false;
+        let gameWon = false;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let animationFrame = null;
+        let pulsePhase = 0;
+
+        function initCanvas() {
+            const maxWidth = Math.min(window.innerWidth - 80, 600);
+            const config = DIFFICULTY_CONFIG[currentDifficulty];
+            const canvasSize = Math.min(maxWidth, config.gridSize * config.cellSize);
+            cellSize = Math.floor(canvasSize / config.gridSize);
+            canvas.width = config.gridSize * cellSize;
+            canvas.height = config.gridSize * cellSize;
+        }
+
+        function generateMaze() {
+            gridSize = DIFFICULTY_CONFIG[currentDifficulty].gridSize;
+            maze = [];
+            for (let y = 0; y < gridSize; y++) {
+                maze[y] = [];
+                for (let x = 0; x < gridSize; x++) {
+                    maze[y][x] = 1;
+                }
+            }
+            const visited = [];
+            for (let y = 0; y < gridSize; y++) {
+                visited[y] = [];
+                for (let x = 0; x < gridSize; x++) {
+                    visited[y][x] = false;
+                }
+            }
+            const stack = [];
+            const startX = 1;
+            const startY = 1;
+            maze[startY][startX] = 0;
+            visited[startY][startX] = true;
+            stack.push({ x: startX, y: startY });
+            
+            while (stack.length > 0) {
+                const current = stack[stack.length - 1];
+                const neighbors = [];
+                
+                for (const dir of DIRECTIONS) {
+                    const nx = current.x + dir.dx;
+                    const ny = current.y + dir.dy;
+                    
+                    if (nx > 0 && nx < gridSize - 1 && ny > 0 && ny < gridSize - 1 && !visited[ny][nx]) {
+                        neighbors.push({ x: nx, y: ny, dx: dir.dx / 2, dy: dir.dy / 2 });
+                    }
+                }
+                
+                if (neighbors.length > 0) {
+                    const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    maze[current.y + next.dy][current.x + next.dx] = 0;
+                    maze[next.y][next.x] = 0;
+                    visited[next.y][next.x] = true;
+                    stack.push({ x: next.x, y: next.y });
+                } else {
+                    stack.pop();
+                }
+            }
+            maze[1][0] = 0;
+            endX = gridSize - 2;
+            endY = gridSize - 2;
+            maze[endY][endX] = 0;
+            maze[endY][endX - 1] = 0;
+            maze[endY - 1][endX] = 0;
+        }
+
+        function drawMaze() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    if (maze[y][x] === 1) {
+                        ctx.fillStyle = '#2d3748';
+                    } else {
+                        ctx.fillStyle = '#e2e8f0';
+                    }
+                    ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                }
+            }
+            ctx.fillStyle = 'rgba(72, 187, 120, 0.5)';
+            ctx.beginPath();
+            ctx.arc(1 * cellSize + cellSize / 2, 1 * cellSize + cellSize / 2, cellSize / 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = 'rgba(245, 101, 101, 0.5)';
+            ctx.beginPath();
+            ctx.arc(endX * cellSize + cellSize / 2, endY * cellSize + cellSize / 2, cellSize / 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawPlayer() {
+            const centerX = playerX * cellSize + cellSize / 2;
+            const centerY = playerY * cellSize + cellSize / 2;
+            const baseRadius = cellSize / 3;
+            const pulseRadius = baseRadius + Math.sin(pulsePhase) * (cellSize / 10);
+            
+            ctx.fillStyle = '#48bb78';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, pulseRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.beginPath();
+            ctx.arc(centerX - cellSize / 6, centerY - cellSize / 6, pulseRadius / 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            pulsePhase += 0.1;
+        }
+
+        function render() {
+            drawMaze();
+            drawPlayer();
+            animationFrame = requestAnimationFrame(render);
+        }
+
+        function canMove(x, y) {
+            if (x < 0 || x >= gridSize || y < 0 || y >= gridSize) {
+                return false;
+            }
+            return maze[y][x] === 0;
+        }
+
+        function movePlayer(dx, dy) {
+            if (gameWon) return;
+            
+            if (!gameStarted) {
+                startGame();
+            }
+            
+            const newX = playerX + dx;
+            const newY = playerY + dy;
+            
+            if (canMove(newX, newY)) {
+                playerX = newX;
+                playerY = newY;
+                steps++;
+                stepsDisplay.textContent = steps;
+                checkWin();
+            }
+        }
+
+        function checkWin() {
+            if (playerX === endX && playerY === endY) {
+                gameWon = true;
+                stopTimer();
+                finalTime.textContent = formatTime(elapsedSeconds);
+                finalSteps.textContent = steps;
+                winModal.classList.remove('hidden');
+            }
+        }
+
+        function startGame() {
+            gameStarted = true;
+            startTimer();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                elapsedSeconds++;
+                timerDisplay.textContent = formatTime(elapsedSeconds);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function resetGame() {
+            stopTimer();
+            playerX = 1;
+            playerY = 1;
+            steps = 0;
+            elapsedSeconds = 0;
+            gameStarted = false;
+            gameWon = false;
+            timerDisplay.textContent = '00:00';
+            stepsDisplay.textContent = '0';
+            generateMaze();
+        }
+
+        function startNewGame(difficulty) {
+            currentDifficulty = difficulty;
+            const difficultyNames = { easy: '简单', medium: '中等', hard: '困难' };
+            difficultyDisplay.textContent = difficultyNames[difficulty];
+            difficultyModal.classList.add('hidden');
+            initCanvas();
+            resetGame();
+        }
+
+        function handleKeyDown(e) {
+            const keyMap = {
+                'ArrowUp': [0, -1], 'KeyW': [0, -1],
+                'ArrowDown': [0, 1], 'KeyS': [0, 1],
+                'ArrowLeft': [-1, 0], 'KeyA': [-1, 0],
+                'ArrowRight': [1, 0], 'KeyD': [1, 0]
+            };
+            
+            if (keyMap[e.code]) {
+                e.preventDefault();
+                const [dx, dy] = keyMap[e.code];
+                movePlayer(dx, dy);
+            }
+        }
+
+        function handleTouchStart(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }
+
+        function handleTouchEnd(e) {
+            if (!touchStartX || !touchStartY) return;
+            
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const dx = touchEndX - touchStartX;
+            const dy = touchEndY - touchStartY;
+            const minSwipe = 20;
+            
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (Math.abs(dx) > minSwipe) {
+                    movePlayer(dx > 0 ? 1 : -1, 0);
+                }
+            } else {
+                if (Math.abs(dy) > minSwipe) {
+                    movePlayer(0, dy > 0 ? 1 : -1);
+                }
+            }
+            
+            touchStartX = 0;
+            touchStartY = 0;
+        }
+
+        newGameBtn.addEventListener('click', () => {
+            difficultyModal.classList.remove('hidden');
+        });
+
+        restartBtn.addEventListener('click', () => {
+            resetGame();
+        });
+
+        playAgainBtn.addEventListener('click', () => {
+            winModal.classList.add('hidden');
+            difficultyModal.classList.remove('hidden');
+        });
+
+        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const difficulty = btn.dataset.difficulty;
+                startNewGame(difficulty);
+            });
+        });
+
+        document.addEventListener('keydown', handleKeyDown);
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: true });
+        canvas.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+        window.addEventListener('resize', () => {
+            initCanvas();
+            if (maze.length > 0) {
+                drawMaze();
+            }
+        });
+
+        startNewGame('easy');
+        render();
+    </script>
+</body>
+</html>
