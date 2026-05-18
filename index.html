@@ -85,6 +85,7 @@
             text-align: center;
             position: relative;
             overflow: hidden;
+            text-decoration: none;
         }
         
         .card::before {
@@ -109,32 +110,32 @@
             border-color: rgba(255, 255, 255, 0.5);
         }
         
-        .card-icon {
-            font-size: 5rem;
-            margin-bottom: 1rem;
-            display: block;
-            animation: bounce 2s ease-in-out infinite;
-        }
-        
-        .card:nth-child(1) .card-icon { animation-delay: 0s; }
-        .card:nth-child(2) .card-icon { animation-delay: 0.3s; }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        
         .card-title {
             color: #fff;
-            font-size: 1.5rem;
+            font-size: 2rem;
             font-weight: bold;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            letter-spacing: 0.1em;
+        }
+        
+        .card-1 .card-title {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .card-2 .card-title {
+            background: linear-gradient(45deg, #ff6b6b, #ff1493);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .card-desc {
             color: rgba(255, 255, 255, 0.7);
             font-size: 0.95rem;
-            line-height: 1.6;
+            line-height: 1.8;
         }
         
         .card-1:hover {
@@ -145,6 +146,19 @@
             background: linear-gradient(135deg, rgba(255, 107, 107, 0.3), rgba(255, 20, 147, 0.3));
         }
         
+        .card-arrow {
+            display: inline-block;
+            margin-top: 1rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .card:hover .card-arrow {
+            color: #fff;
+            transform: translateX(10px);
+        }
+        
         .footer {
             position: fixed;
             bottom: 2rem;
@@ -152,41 +166,18 @@
             font-size: 0.9rem;
         }
         
-        .floating-element {
+        .floating-text {
             position: fixed;
-            font-size: 2rem;
-            animation: float-around 15s linear infinite;
-            opacity: 0.3;
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.15);
+            animation: float-around 20s linear infinite;
             pointer-events: none;
+            font-weight: bold;
         }
         
         @keyframes float-around {
             0% { transform: translateY(100vh) rotate(0deg); }
             100% { transform: translateY(-100vh) rotate(360deg); }
-        }
-        
-        .maze-preview {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 2rem;
-        }
-        
-        .heart-preview {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1rem;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff1493 100%);
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 2rem;
         }
         
         @media (max-width: 640px) {
@@ -199,36 +190,36 @@
 <body>
     <div class="stars" id="stars"></div>
     
-    <div class="floating-element" style="left: 10%; animation-duration: 20s;">🎮</div>
-    <div class="floating-element" style="left: 30%; animation-duration: 25s; animation-delay: 5s;">🎯</div>
-    <div class="floating-element" style="left: 50%; animation-duration: 18s; animation-delay: 2s;">⭐</div>
-    <div class="floating-element" style="left: 70%; animation-duration: 22s; animation-delay: 8s;">💖</div>
-    <div class="floating-element" style="left: 90%; animation-duration: 24s; animation-delay: 4s;">🎨</div>
+    <div class="floating-text" style="left: 5%; animation-duration: 18s;">游戏</div>
+    <div class="floating-text" style="left: 25%; animation-duration: 22s; animation-delay: 3s;">迷宫</div>
+    <div class="floating-text" style="left: 45%; animation-duration: 20s; animation-delay: 6s;">爱心</div>
+    <div class="floating-text" style="left: 65%; animation-duration: 24s; animation-delay: 2s;">冒险</div>
+    <div class="floating-text" style="left: 85%; animation-duration: 19s; animation-delay: 5s;">快乐</div>
     
-    <h1>🎮 我的小游戏集合</h1>
+    <h1>🎮 我的小游戏</h1>
     <p class="subtitle">点击卡片开始游戏</p>
     
     <div class="cards-container">
-        <a href="index.html" class="card card-1" style="text-decoration: none;">
-            <div class="maze-preview">🧩</div>
-            <span class="card-title">迷宫冒险</span>
+        <a href="maze-adventure.html" class="card card-1">
+            <div class="card-title">迷宫冒险</div>
             <p class="card-desc">
-                使用DFS算法生成的随机迷宫<br>
+                随机生成的迷宫地图<br>
                 支持键盘和触摸操作<br>
-                三种难度挑战<br>
-                ⭐ 计时&步数统计
+                三种难度等级<br>
+                计时与步数统计
             </p>
+            <span class="card-arrow">→ 立即开始</span>
         </a>
         
-        <a href="love-heart.html" class="card card-2" style="text-decoration: none;">
-            <div class="heart-preview">💖</div>
-            <span class="card-title">炫酷爱心</span>
+        <a href="love-heart.html" class="card card-2">
+            <div class="card-title">炫酷爱心</div>
             <p class="card-desc">
-                精美的爱心动画效果<br>
-                点击触发惊喜<br>
-                粒子特效+爱心雨<br>
-                ❤️ 送给特别的人
+                精美爱心动画效果<br>
+                点击触发惊喜特效<br>
+                粒子+爱心雨<br>
+                送给特别的人
             </p>
+            <span class="card-arrow">→ 立即体验</span>
         </a>
     </div>
     
@@ -236,7 +227,7 @@
     
     <script>
         const starsContainer = document.getElementById('stars');
-        const starCount = 100;
+        const starCount = 80;
         
         for (let i = 0; i < starCount; i++) {
             const star = document.createElement('div');
