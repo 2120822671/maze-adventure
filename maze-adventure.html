@@ -8,141 +8,586 @@
     <style>
         @keyframes pulse {
             0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 0.9; }
         }
-        .player-pulse {
-            animation: pulse 1.5s ease-in-out infinite;
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-60px) scale(1.8); }
         }
+        @keyframes winBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes starField {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 1000px; }
+        }
+        @keyframes monsterShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+        @keyframes damageFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; filter: brightness(2); }
+        }
+        @keyframes countdownPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .player-pulse { animation: pulse 1.2s ease-in-out infinite; }
+        .float-up { animation: floatUp 1.2s ease-out forwards; }
+        .win-bounce { animation: winBounce 0.4s ease-in-out 4; }
+        .modal-fade-in { animation: fadeIn 0.3s ease-out; }
+        .slide-in { animation: slideIn 0.4s ease-out; }
+        .shimmer-text {
+            background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s linear infinite;
+        }
+        .monster-shake { animation: monsterShake 0.3s ease-in-out; }
+        .damage-flash { animation: damageFlash 0.5s ease-in-out; }
+        .countdown-pulse { animation: countdownPulse 1s ease-in-out infinite; }
+
         .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 30%, #0f3460 60%, #533483 100%);
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.3), transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.2), transparent),
+                radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.4), transparent),
+                radial-gradient(2px 2px at 130px 80px, rgba(255,255,255,0.2), transparent),
+                radial-gradient(1px 1px at 160px 120px, rgba(255,255,255,0.3), transparent);
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            animation: starField 20s linear infinite;
         }
+        .gradient-bg-ocean {
+            background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 30%, #0ea5e9 60%, #38bdf8 100%);
+            background-image: 
+                radial-gradient(ellipse at 20% 30%, rgba(147, 197, 253, 0.15), transparent),
+                radial-gradient(ellipse at 80% 70%, rgba(56, 189, 248, 0.1), transparent);
+        }
+        .gradient-bg-forest {
+            background: linear-gradient(135deg, #14532d 0%, #166534 30%, #15803d 60%, #16a34a 100%);
+            background-image: 
+                radial-gradient(ellipse at 30% 20%, rgba(74, 222, 128, 0.1), transparent),
+                radial-gradient(ellipse at 70% 80%, rgba(34, 197, 94, 0.15), transparent);
+        }
+
         #mazeCanvas {
             touch-action: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            background-color: #e8d5f2;
+            width: 450px;
+            height: 450px;
+            display: block;
+        }
+        .status-badge {
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        .status-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+        .game-btn {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+        .game-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        .game-btn:hover::before {
+            left: 100%;
+        }
+        .game-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        .theme-btn {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .theme-btn:hover {
+            transform: scale(1.15);
+        }
+        .theme-btn.active {
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.3);
+        }
+        .leaderboard-item {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .leaderboard-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            border-radius: 0 2px 2px 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .leaderboard-item:hover::before {
+            opacity: 1;
+        }
+        .leaderboard-item:hover {
+            transform: translateX(8px);
+            background: rgba(102, 126, 234, 0.1) !important;
+        }
+        .collectible-item {
+            transition: all 0.3s ease;
+        }
+        .collectible-item.collected {
+            opacity: 0.3;
+            transform: scale(0.8);
         }
     </style>
 </head>
 <body class="gradient-bg min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 w-full max-w-2xl">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">🎮 迷宫冒险</h1>
-        
-        <div id="statusBar" class="flex flex-wrap justify-center gap-4 mb-4 text-sm">
-            <div class="bg-indigo-100 px-4 py-2 rounded-full">
-                <span class="text-gray-600">难度：</span>
-                <span id="difficultyDisplay" class="font-semibold text-indigo-600">简单</span>
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-10 left-10 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-20 right-20 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/2 left-1/4 w-24 h-24 bg-pink-500/10 rounded-full blur-2xl"></div>
+    </div>
+
+    <div id="gameContainer" class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-6 w-full max-w-2xl relative z-10">
+        <div class="text-center mb-6">
+            <h1 class="text-4xl font-bold shimmer-text mb-2">迷宫冒险</h1>
+            <p class="text-gray-500 text-sm">探索未知，躲避怪物，寻找宝藏</p>
+        </div>
+
+        <div id="statusBar" class="flex flex-wrap justify-center gap-3 mb-5">
+            <div class="status-badge bg-gradient-to-r from-indigo-500/20 to-purple-500/20 px-4 py-2 rounded-full border border-indigo-200">
+                <span class="text-gray-600 text-sm">难度</span>
+                <span id="difficultyDisplay" class="font-bold text-indigo-600 ml-2">简单</span>
             </div>
-            <div class="bg-green-100 px-4 py-2 rounded-full">
-                <span class="text-gray-600">用时：</span>
-                <span id="timerDisplay" class="font-semibold text-green-600">00:00</span>
+            <div class="status-badge bg-gradient-to-r from-green-500/20 to-emerald-500/20 px-4 py-2 rounded-full border border-green-200">
+                <span class="text-gray-600 text-sm">用时</span>
+                <span id="timerDisplay" class="font-bold text-green-600 ml-2">00:00</span>
             </div>
-            <div class="bg-orange-100 px-4 py-2 rounded-full">
-                <span class="text-gray-600">步数：</span>
-                <span id="stepsDisplay" class="font-semibold text-orange-600">0</span>
+            <div class="status-badge bg-gradient-to-r from-orange-500/20 to-amber-500/20 px-4 py-2 rounded-full border border-orange-200">
+                <span class="text-gray-600 text-sm">步数</span>
+                <span id="stepsDisplay" class="font-bold text-orange-600 ml-2">0</span>
+            </div>
+            <div class="status-badge bg-gradient-to-r from-yellow-500/20 to-gold-500/20 px-4 py-2 rounded-full border border-yellow-200">
+                <span class="text-gray-600 text-sm">分数</span>
+                <span id="scoreDisplay" class="font-bold text-yellow-600 ml-2">0</span>
+            </div>
+            <div class="status-badge bg-gradient-to-r from-purple-500/20 to-violet-500/20 px-4 py-2 rounded-full border border-purple-200">
+                <span class="text-gray-600 text-sm">最高分</span>
+                <span id="highScoreDisplay" class="font-bold text-purple-600 ml-2">0</span>
+            </div>
+            <div class="status-badge bg-gradient-to-r from-red-500/20 to-rose-500/20 px-4 py-2 rounded-full border border-red-200">
+                <span class="text-gray-600 text-sm">生命</span>
+                <span id="livesDisplay" class="font-bold text-red-600 ml-2">❤️❤️❤️</span>
             </div>
         </div>
-        
-        <div class="flex justify-center mb-4">
-            <canvas id="mazeCanvas" class="border-4 border-gray-300 rounded-xl"></canvas>
+
+        <div id="collectiblesBar" class="flex justify-center gap-4 mb-4">
+            <div class="collectible-item flex flex-col items-center" id="coinCollectible">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-lg">
+                    <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=golden%20coin%20with%20dollar%20sign%20cartoon%20style%20shiny&image_size=square" alt="金币" class="w-6 h-6 rounded-full">
+                </div>
+                <span class="text-xs text-gray-500 mt-1">0/3</span>
+            </div>
+            <div class="collectible-item flex flex-col items-center" id="gemCollectible">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-600 flex items-center justify-center shadow-lg">
+                    <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=blue%20diamond%20gemstone%20sparkling%20cartoon%20style&image_size=square" alt="宝石" class="w-6 h-6 rounded-full">
+                </div>
+                <span class="text-xs text-gray-500 mt-1">0/2</span>
+            </div>
+            <div class="collectible-item flex flex-col items-center" id="heartCollectible">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-red-400 to-pink-600 flex items-center justify-center shadow-lg">
+                    <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=red%20heart%20love%20symbol%20cartoon%20cute%20style&image_size=square" alt="爱心" class="w-6 h-6 rounded-full">
+                </div>
+                <span class="text-xs text-gray-500 mt-1">0/1</span>
+            </div>
         </div>
-        
-        <div id="controls" class="text-center text-gray-500 text-sm mb-4">
-            <p>⌨️ WASD / 方向键 移动 &nbsp;|&nbsp; 👆 触摸滑动</p>
+
+        <div class="flex justify-center mb-5 relative">
+            <canvas id="mazeCanvas"></canvas>
+            <div id="floatingScore" class="absolute pointer-events-none text-3xl font-bold text-yellow-400 opacity-0 text-center"></div>
+            <div id="pauseOverlay" class="absolute inset-0 bg-black/70 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center hidden">
+                <div class="text-6xl mb-4">⏸️</div>
+                <div class="text-white text-2xl font-bold mb-2">游戏暂停</div>
+                <div class="text-white/70 text-sm">按空格键继续</div>
+            </div>
+            <div id="startOverlay" class="absolute inset-0 bg-black/60 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center">
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cute%20adventurer%20character%20cartoon%20explorer%20happy&image_size=square" alt="探险者" class="w-20 h-20 rounded-full mb-4 animate-bounce">
+                <div class="text-white text-xl font-bold mb-2">准备开始</div>
+                <div class="text-white/70 text-sm">移动开始游戏</div>
+            </div>
+            <div id="gameOverOverlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center hidden">
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=monster%20chasing%20scared%20character%20cartoon%20game%20over&image_size=square" alt="游戏结束" class="w-24 h-24 rounded-full mb-4">
+                <div class="text-white text-2xl font-bold mb-2">游戏结束</div>
+                <div class="text-white/70 text-sm mb-4" id="gameOverReason">被怪物抓住了！</div>
+                <div class="text-white text-lg font-bold mb-4" id="finalScoreDisplay">得分: 0</div>
+                <button id="restartAfterGameOverBtn" class="game-btn bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold">
+                    🔄 再试一次
+                </button>
+            </div>
         </div>
-        
-        <div class="flex justify-center gap-4">
-            <button id="newGameBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 shadow-lg">
+
+        <div id="monsterWarning" class="text-center text-red-500 text-sm mb-4 hidden">
+            ⚠️ <span id="monsterDistance">怪物正在接近！</span>
+        </div>
+
+        <div id="controls" class="text-center text-gray-400 text-sm mb-5">
+            <p>⌨️ WASD / 方向键 移动 &nbsp;|&nbsp; 👆 触摸滑动 &nbsp;|&nbsp; 空格键 暂停</p>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-3 mb-5">
+            <button id="startBtn" class="game-btn bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg">
+                ▶️ 开始
+            </button>
+            <button id="pauseBtn" class="game-btn bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg">
+                ⏸️ 暂停
+            </button>
+            <button id="newGameBtn" class="game-btn bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg">
                 🆕 新游戏
             </button>
-            <button id="restartBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 shadow-lg">
+            <button id="restartBtn" class="game-btn bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg">
                 🔄 重新开始
             </button>
         </div>
+
+        <div class="flex justify-center gap-3 mb-5">
+            <button id="themeBtn1" class="theme-btn w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 active" title="梦幻紫"></button>
+            <button id="themeBtn2" class="theme-btn w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 via-cyan-400 to-sky-500" title="海洋蓝"></button>
+            <button id="themeBtn3" class="theme-btn w-12 h-12 rounded-full bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500" title="森林绿"></button>
+        </div>
+
+        <div class="flex justify-center gap-3">
+            <button id="leaderboardBtn" class="game-btn bg-gradient-to-r from-pink-500 to-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg">
+                🏆 排行榜
+            </button>
+            <button id="helpBtn" class="game-btn bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg">
+                ❓ 帮助
+            </button>
+        </div>
     </div>
 
-    <div id="difficultyModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-2xl p-6 shadow-2xl max-w-sm w-full mx-4">
-            <h2 class="text-xl font-bold text-center text-gray-800 mb-4">选择难度</h2>
-            <div class="flex flex-col gap-3">
-                <button data-difficulty="easy" class="difficulty-btn bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105">
-                    🌱 简单 (15×15)
+    <div id="difficultyModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-3xl p-8 shadow-2xl max-w-md w-full mx-4 slide-in">
+            <div class="text-center mb-6">
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=game%20difficulty%20selection%20icons%20easy%20medium%20hard%20cartoon&image_size=square" alt="难度选择" class="w-16 h-16 mx-auto mb-3 rounded-full">
+                <h2 class="text-2xl font-bold text-gray-800">选择难度</h2>
+                <p class="text-gray-500 text-sm mt-2">难度越高，迷宫越大，怪物速度越快</p>
+            </div>
+            <div class="space-y-3">
+                <button data-difficulty="easy" class="difficulty-btn w-full bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white px-6 py-4 rounded-xl font-bold transition-all hover:scale-105 flex items-center justify-between">
+                    <span>🌱 简单模式</span>
+                    <span class="text-sm opacity-80">15×15 · 怪物慢速</span>
                 </button>
-                <button data-difficulty="medium" class="difficulty-btn bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105">
-                    🌿 中等 (21×21)
+                <button data-difficulty="medium" class="difficulty-btn w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white px-6 py-4 rounded-xl font-bold transition-all hover:scale-105 flex items-center justify-between">
+                    <span>🌿 中等模式</span>
+                    <span class="text-sm opacity-80">21×21 · 怪物中速</span>
                 </button>
-                <button data-difficulty="hard" class="difficulty-btn bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105">
-                    🌳 困难 (31×31)
+                <button data-difficulty="hard" class="difficulty-btn w-full bg-gradient-to-r from-red-400 to-rose-600 hover:from-red-500 hover:to-rose-700 text-white px-6 py-4 rounded-xl font-bold transition-all hover:scale-105 flex items-center justify-between">
+                    <span>🌳 困难模式</span>
+                    <span class="text-sm opacity-80">31×31 · 怪物快速</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="winModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full mx-4 text-center">
-            <h2 class="text-3xl font-bold text-green-600 mb-4">🎉 恭喜通关！</h2>
-            <div class="text-gray-700 mb-6 space-y-2">
-                <p>用时：<span id="finalTime" class="font-bold text-green-600">00:00</span></p>
-                <p>步数：<span id="finalSteps" class="font-bold text-orange-600">0</span></p>
+    <div id="winModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-3xl p-8 shadow-2xl max-w-md w-full mx-4 modal-fade-in">
+            <div class="text-center">
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=victory%20trophy%20celebration%20happy%20cartoon%20confetti&image_size=square" alt="胜利" class="w-20 h-20 mx-auto mb-4 rounded-full">
+                <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-orange-500 mb-4">恭喜通关！</h2>
+                <div id="newRecord" class="text-2xl text-purple-600 font-bold mb-4 hidden">🏆 新纪录！</div>
+                <div class="bg-gray-50 rounded-xl p-4 mb-6 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500">用时</span>
+                        <span id="finalTime" class="font-bold text-green-600">00:00</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500">步数</span>
+                        <span id="finalSteps" class="font-bold text-orange-600">0</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500">金币收集</span>
+                        <span id="finalCoins" class="font-bold text-yellow-600">0/3</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500">宝石收集</span>
+                        <span id="finalGems" class="font-bold text-cyan-600">0/2</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500">爱心收集</span>
+                        <span id="finalHearts" class="font-bold text-pink-600">0/1</span>
+                    </div>
+                    <div class="border-t border-gray-200 pt-3 flex justify-between items-center">
+                        <span class="text-gray-700 font-semibold">最终得分</span>
+                        <span id="finalScore" class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">0</span>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button id="playAgainBtn" class="game-btn flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold">
+                        再玩一次
+                    </button>
+                    <button id="backToMenuBtn" class="game-btn flex-1 bg-gradient-to-r from-gray-400 to-gray-500 text-white px-6 py-3 rounded-xl font-semibold">
+                        返回菜单
+                    </button>
+                </div>
             </div>
-            <button id="playAgainBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white px-8 py-3 rounded-xl font-semibold transition-all hover:scale-105 shadow-lg">
-                再玩一次
+        </div>
+    </div>
+
+    <div id="leaderboardModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-3xl p-6 shadow-2xl max-w-md w-full mx-4 slide-in">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <span>🏆</span> 排行榜
+                </h2>
+                <button id="closeLeaderboardBtn" class="text-gray-400 hover:text-gray-600 text-2xl transition-colors">&times;</button>
+            </div>
+            <div id="leaderboardList" class="space-y-2 max-h-80 overflow-y-auto">
+                <div class="text-center text-gray-400 py-8">
+                    <div class="text-4xl mb-2">📊</div>
+                    <div>暂无记录</div>
+                </div>
+            </div>
+            <button id="clearLeaderboardBtn" class="w-full mt-4 bg-gradient-to-r from-red-400 to-rose-500 hover:from-red-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-xl font-semibold transition-all">
+                🗑️ 清空记录
             </button>
+        </div>
+    </div>
+
+    <div id="helpModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-3xl p-6 shadow-2xl max-w-md w-full mx-4 slide-in">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <span>❓</span> 游戏帮助
+                </h2>
+                <button id="closeHelpBtn" class="text-gray-400 hover:text-gray-600 text-2xl transition-colors">&times;</button>
+            </div>
+            <div class="space-y-4 text-gray-600">
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-2">🎯 游戏目标</h3>
+                    <p class="text-sm">从起点出发，穿越迷宫到达终点。收集金币、宝石和爱心获得额外分数，同时躲避怪物的追逐！</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-2">👹 怪物追逐</h3>
+                    <p class="text-sm">怪物会追踪你的位置，被抓住会失去一条生命。生命耗尽则游戏结束！</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-2">🎮 操作方式</h3>
+                    <ul class="text-sm space-y-1">
+                        <li>• WASD 或 方向键：移动角色</li>
+                        <li>• 空格键：暂停/继续游戏</li>
+                        <li>• 触摸滑动：在手机上移动</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-2">💎 收集物品</h3>
+                    <ul class="text-sm space-y-1">
+                        <li>• 🪙 金币：每个+100分</li>
+                        <li>• 💎 宝石：每个+200分</li>
+                        <li>• ❤️ 爱心：+500分，还能恢复一条生命</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-2">📈 计分规则</h3>
+                    <ul class="text-sm space-y-1">
+                        <li>• 基础分：1000分</li>
+                        <li>• 时间奖励：(300-用时秒数) × 2</li>
+                        <li>• 步数惩罚：步数 × 5</li>
+                        <li>• 难度加成：简单1x | 中等1.5x | 困难2x</li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
         const canvas = document.getElementById('mazeCanvas');
         const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            console.error('Failed to get canvas context');
+        }
         const timerDisplay = document.getElementById('timerDisplay');
         const stepsDisplay = document.getElementById('stepsDisplay');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const highScoreDisplay = document.getElementById('highScoreDisplay');
+        const livesDisplay = document.getElementById('livesDisplay');
         const difficultyDisplay = document.getElementById('difficultyDisplay');
+        const monsterWarning = document.getElementById('monsterWarning');
+        const monsterDistance = document.getElementById('monsterDistance');
+        
         const difficultyModal = document.getElementById('difficultyModal');
         const winModal = document.getElementById('winModal');
+        const gameOverOverlay = document.getElementById('gameOverOverlay');
+        const gameOverReason = document.getElementById('gameOverReason');
+        const finalScoreDisplay = document.getElementById('finalScoreDisplay');
+        const leaderboardModal = document.getElementById('leaderboardModal');
+        const helpModal = document.getElementById('helpModal');
+        const leaderboardList = document.getElementById('leaderboardList');
+        const pauseOverlay = document.getElementById('pauseOverlay');
+        const startOverlay = document.getElementById('startOverlay');
+        const floatingScore = document.getElementById('floatingScore');
+        const newRecord = document.getElementById('newRecord');
+        
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
         const newGameBtn = document.getElementById('newGameBtn');
         const restartBtn = document.getElementById('restartBtn');
+        const restartAfterGameOverBtn = document.getElementById('restartAfterGameOverBtn');
         const playAgainBtn = document.getElementById('playAgainBtn');
+        const backToMenuBtn = document.getElementById('backToMenuBtn');
+        const leaderboardBtn = document.getElementById('leaderboardBtn');
+        const helpBtn = document.getElementById('helpBtn');
+        const closeLeaderboardBtn = document.getElementById('closeLeaderboardBtn');
+        const closeHelpBtn = document.getElementById('closeHelpBtn');
+        const clearLeaderboardBtn = document.getElementById('clearLeaderboardBtn');
+        const themeBtn1 = document.getElementById('themeBtn1');
+        const themeBtn2 = document.getElementById('themeBtn2');
+        const themeBtn3 = document.getElementById('themeBtn3');
+        
         const finalTime = document.getElementById('finalTime');
         const finalSteps = document.getElementById('finalSteps');
+        const finalScore = document.getElementById('finalScore');
+        const finalCoins = document.getElementById('finalCoins');
+        const finalGems = document.getElementById('finalGems');
+        const finalHearts = document.getElementById('finalHearts');
+        const gameContainer = document.getElementById('gameContainer');
+        const body = document.body;
 
         const DIFFICULTY_CONFIG = {
-            easy: { gridSize: 15, cellSize: 30 },
-            medium: { gridSize: 21, cellSize: 25 },
-            hard: { gridSize: 31, cellSize: 20 }
+            easy: { gridSize: 15, cellSize: 32, scoreMultiplier: 1, coinCount: 3, gemCount: 2, monsterSpeed: 1000 },
+            medium: { gridSize: 21, cellSize: 26, scoreMultiplier: 1.5, coinCount: 4, gemCount: 3, monsterSpeed: 700 },
+            hard: { gridSize: 31, cellSize: 20, scoreMultiplier: 2, coinCount: 5, gemCount: 4, monsterSpeed: 500 }
+        };
+
+        const THEME_CONFIG = {
+            default: {
+                name: '梦幻紫',
+                bgClass: 'gradient-bg',
+                wallColor: '#2d1b69',
+                wallLight: '#4c2b8c',
+                wallDark: '#1a0f40',
+                pathColor: '#e8d5f2',
+                pathAlt: '#d4b8e8',
+                playerColor: '#10b981',
+                playerGlow: '#34d399',
+                endColor: '#f472b6',
+                accentColor: '#8b5cf6',
+                monsterColor: '#ef4444'
+            },
+            ocean: {
+                name: '海洋蓝',
+                bgClass: 'gradient-bg-ocean',
+                wallColor: '#075985',
+                wallLight: '#0c7aab',
+                wallDark: '#032d44',
+                pathColor: '#e0f2fe',
+                pathAlt: '#bae6fd',
+                playerColor: '#f59e0b',
+                playerGlow: '#fbbf24',
+                endColor: '#fb923c',
+                accentColor: '#0ea5e9',
+                monsterColor: '#f97316'
+            },
+            forest: {
+                name: '森林绿',
+                bgClass: 'gradient-bg-forest',
+                wallColor: '#14532d',
+                wallLight: '#166534',
+                wallDark: '#0a2f18',
+                pathColor: '#dcfce7',
+                pathAlt: '#bbf7d0',
+                playerColor: '#3b82f6',
+                playerGlow: '#60a5fa',
+                endColor: '#f43f5e',
+                accentColor: '#22c55e',
+                monsterColor: '#dc2626'
+            }
         };
 
         const DIRECTIONS = [
-            { dx: 0, dy: -2 },
-            { dx: 2, dy: 0 },
-            { dx: 0, dy: 2 },
-            { dx: -2, dy: 0 }
+            { dx: 0, dy: -1 },
+            { dx: 1, dy: 0 },
+            { dx: 0, dy: 1 },
+            { dx: -1, dy: 0 }
         ];
 
         let currentDifficulty = 'easy';
+        let currentTheme = 'default';
         let maze = [];
         let gridSize = 15;
-        let cellSize = 30;
+        let cellSize = 32;
         let playerX = 1;
         let playerY = 1;
         let endX, endY;
+        let monsterX, monsterY;
         let steps = 0;
+        let score = 0;
+        let highScore = 0;
+        let lives = 3;
+        let canStartGame = false;
+        let coinsCollected = 0;
+        let gemsCollected = 0;
+        let heartCollected = false;
         let timerInterval = null;
+        let monsterInterval = null;
         let elapsedSeconds = 0;
         let gameStarted = false;
         let gameWon = false;
+        let gameOver = false;
+        let gamePaused = false;
         let touchStartX = 0;
         let touchStartY = 0;
         let animationFrame = null;
         let pulsePhase = 0;
+        let monsterPulsePhase = 0;
+        let isMoving = false;
+        let moveAnimation = { startX: 0, startY: 0, targetX: 0, targetY: 0, progress: 0 };
+        let collectibles = [];
+        let trailParticles = [];
+        let leaderboard = [];
 
         function initCanvas() {
-            const maxWidth = Math.min(window.innerWidth - 80, 600);
-            const config = DIFFICULTY_CONFIG[currentDifficulty];
-            const canvasSize = Math.min(maxWidth, config.gridSize * config.cellSize);
-            cellSize = Math.floor(canvasSize / config.gridSize);
-            canvas.width = config.gridSize * cellSize;
-            canvas.height = config.gridSize * cellSize;
+            gridSize = DIFFICULTY_CONFIG[currentDifficulty].gridSize;
+            const maxWidth = Math.min(window.innerWidth - 32, 640);
+            const maxHeight = Math.min(window.innerHeight - 400, 640);
+            const canvasSize = Math.min(maxWidth, maxHeight, gridSize * cellSize);
+            cellSize = Math.max(20, Math.floor(canvasSize / gridSize));
+            const newWidth = gridSize * cellSize;
+            const newHeight = gridSize * cellSize;
+            if (canvas.width !== newWidth || canvas.height !== newHeight) {
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+            }
         }
 
         function generateMaze() {
-            gridSize = DIFFICULTY_CONFIG[currentDifficulty].gridSize;
             maze = [];
             for (let y = 0; y < gridSize; y++) {
                 maze[y] = [];
@@ -150,96 +595,336 @@
                     maze[y][x] = 1;
                 }
             }
-            const visited = [];
-            for (let y = 0; y < gridSize; y++) {
-                visited[y] = [];
-                for (let x = 0; x < gridSize; x++) {
-                    visited[y][x] = false;
-                }
-            }
+
             const stack = [];
             const startX = 1;
             const startY = 1;
             maze[startY][startX] = 0;
-            visited[startY][startX] = true;
             stack.push({ x: startX, y: startY });
-            
+
             while (stack.length > 0) {
                 const current = stack[stack.length - 1];
                 const neighbors = [];
-                
+
                 for (const dir of DIRECTIONS) {
-                    const nx = current.x + dir.dx;
-                    const ny = current.y + dir.dy;
-                    
-                    if (nx > 0 && nx < gridSize - 1 && ny > 0 && ny < gridSize - 1 && !visited[ny][nx]) {
-                        neighbors.push({ x: nx, y: ny, dx: dir.dx / 2, dy: dir.dy / 2 });
+                    const nx = current.x + dir.dx * 2;
+                    const ny = current.y + dir.dy * 2;
+
+                    if (nx > 0 && nx < gridSize - 1 && ny > 0 && ny < gridSize - 1 && maze[ny][nx] === 1) {
+                        neighbors.push({ x: nx, y: ny, dx: dir.dx, dy: dir.dy });
                     }
                 }
-                
+
                 if (neighbors.length > 0) {
                     const next = neighbors[Math.floor(Math.random() * neighbors.length)];
                     maze[current.y + next.dy][current.x + next.dx] = 0;
                     maze[next.y][next.x] = 0;
-                    visited[next.y][next.x] = true;
                     stack.push({ x: next.x, y: next.y });
                 } else {
                     stack.pop();
                 }
             }
+
             maze[1][0] = 0;
             endX = gridSize - 2;
             endY = gridSize - 2;
             maze[endY][endX] = 0;
-            maze[endY][endX - 1] = 0;
-            maze[endY - 1][endX] = 0;
+
+            placeMonster();
+            placeCollectibles();
+        }
+
+        function placeMonster() {
+            const paths = [];
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    if (maze[y][x] === 0 && !(x === 1 && y === 1) && !(x === endX && y === endY)) {
+                        const distToStart = Math.abs(x - 1) + Math.abs(y - 1);
+                        const distToEnd = Math.abs(x - endX) + Math.abs(y - endY);
+                        if (distToStart > gridSize / 2 && distToEnd > gridSize / 2) {
+                            paths.push({ x, y });
+                        }
+                    }
+                }
+            }
+            if (paths.length > 0) {
+                const pos = paths[Math.floor(Math.random() * paths.length)];
+                monsterX = pos.x;
+                monsterY = pos.y;
+            } else {
+                monsterX = gridSize - 3;
+                monsterY = Math.floor(gridSize / 2);
+            }
+        }
+
+        function placeCollectibles() {
+            collectibles = [];
+            const config = DIFFICULTY_CONFIG[currentDifficulty];
+            const paths = [];
+
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    if (maze[y][x] === 0 && !(x === 1 && y === 1) && !(x === endX && y === endY) && !(x === monsterX && y === monsterY)) {
+                        paths.push({ x, y });
+                    }
+                }
+            }
+
+            paths.sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < config.coinCount && i < paths.length; i++) {
+                collectibles.push({ ...paths[i], type: 'coin', collected: false });
+            }
+            paths.splice(0, config.coinCount);
+
+            for (let i = 0; i < config.gemCount && i < paths.length; i++) {
+                collectibles.push({ ...paths[i], type: 'gem', collected: false });
+            }
+            paths.splice(0, config.gemCount);
+
+            if (paths.length > 0) {
+                collectibles.push({ ...paths[0], type: 'heart', collected: false });
+            }
         }
 
         function drawMaze() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!ctx || !maze.length) {
+                console.log('Cannot draw maze: ctx=', !!ctx, 'maze.length=', maze.length);
+                return;
+            }
+            
+            ctx.fillStyle = '#e8d5f2';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
             for (let y = 0; y < gridSize; y++) {
                 for (let x = 0; x < gridSize; x++) {
-                    if (maze[y][x] === 1) {
-                        ctx.fillStyle = '#2d3748';
-                    } else {
-                        ctx.fillStyle = '#e2e8f0';
+                    if (maze[y] && maze[y][x] === 1) {
+                        ctx.fillStyle = '#2d1b69';
+                        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
                     }
-                    ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
                 }
             }
-            ctx.fillStyle = 'rgba(72, 187, 120, 0.5)';
+
+            drawCollectibles();
+            drawMonster();
+
+            ctx.fillStyle = '#f472b6';
             ctx.beginPath();
-            ctx.arc(1 * cellSize + cellSize / 2, 1 * cellSize + cellSize / 2, cellSize / 3, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.fillStyle = 'rgba(245, 101, 101, 0.5)';
-            ctx.beginPath();
-            ctx.arc(endX * cellSize + cellSize / 2, endY * cellSize + cellSize / 2, cellSize / 3, 0, Math.PI * 2);
+            ctx.moveTo(endX * cellSize + cellSize / 2, endY * cellSize + 4);
+            ctx.lineTo(endX * cellSize + cellSize - 4, endY * cellSize + cellSize / 2);
+            ctx.lineTo(endX * cellSize + cellSize / 2, endY * cellSize + cellSize - 4);
+            ctx.lineTo(endX * cellSize + 4, endY * cellSize + cellSize / 2);
+            ctx.closePath();
             ctx.fill();
         }
 
+        function drawCollectibles() {
+            collectibles.forEach(item => {
+                if (item.collected) return;
+                
+                const centerX = item.x * cellSize + cellSize / 2;
+                const centerY = item.y * cellSize + cellSize / 2;
+                const size = cellSize / 3;
+                const pulse = Math.sin(Date.now() / 300) * 0.1 + 1;
+
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.scale(pulse, pulse);
+
+                if (item.type === 'coin') {
+                    const gradient = ctx.createRadialGradient(0, -size / 4, 0, 0, 0, size);
+                    gradient.addColorStop(0, '#fef3c7');
+                    gradient.addColorStop(0.5, '#fbbf24');
+                    gradient.addColorStop(1, '#b45309');
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#b45309';
+                    ctx.font = `${size * 0.6}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('$', 0, 0);
+                } else if (item.type === 'gem') {
+                    const gradient = ctx.createRadialGradient(-size / 4, -size / 4, 0, 0, 0, size);
+                    gradient.addColorStop(0, '#dbeafe');
+                    gradient.addColorStop(0.5, '#38bdf8');
+                    gradient.addColorStop(1, '#0369a1');
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -size);
+                    ctx.lineTo(size * 0.7, -size * 0.3);
+                    ctx.lineTo(size * 0.7, size * 0.3);
+                    ctx.lineTo(0, size);
+                    ctx.lineTo(-size * 0.7, size * 0.3);
+                    ctx.lineTo(-size * 0.7, -size * 0.3);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (item.type === 'heart') {
+                    const gradient = ctx.createRadialGradient(-size / 4, -size / 4, 0, 0, 0, size);
+                    gradient.addColorStop(0, '#fecaca');
+                    gradient.addColorStop(0.5, '#f87171');
+                    gradient.addColorStop(1, '#b91c1c');
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.moveTo(0, size * 0.2);
+                    ctx.bezierCurveTo(-size, -size * 0.5, -size * 0.5, size * 0.5, 0, size);
+                    ctx.bezierCurveTo(size * 0.5, size * 0.5, size, -size * 0.5, 0, size * 0.2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            });
+        }
+
+        function drawMonster() {
+            if (gameOver) return;
+            
+            const x = monsterX * cellSize + cellSize / 2;
+            const y = monsterY * cellSize + cellSize / 2;
+            const scale = cellSize / 40;
+
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+
+            ctx.shadowColor = '#ef4444';
+            ctx.shadowBlur = 15;
+
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(0, 0, 18, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(-6, -2, 6, 0, Math.PI * 2);
+            ctx.arc(6, -2, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#1a1a1a';
+            ctx.beginPath();
+            ctx.arc(-6, -1, 3, 0, Math.PI * 2);
+            ctx.arc(6, -1, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#1a1a1a';
+            ctx.beginPath();
+            ctx.moveTo(-10, 6);
+            ctx.lineTo(-6, 12);
+            ctx.lineTo(-2, 6);
+            ctx.lineTo(2, 12);
+            ctx.lineTo(6, 6);
+            ctx.lineTo(10, 12);
+            ctx.lineTo(10, 6);
+            ctx.lineTo(-10, 6);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#fca5a5';
+            ctx.beginPath();
+            ctx.arc(-12, 2, 4, 0, Math.PI * 2);
+            ctx.arc(12, 2, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+            monsterPulsePhase += 0.15;
+        }
+
         function drawPlayer() {
-            const centerX = playerX * cellSize + cellSize / 2;
-            const centerY = playerY * cellSize + cellSize / 2;
-            const baseRadius = cellSize / 3;
-            const pulseRadius = baseRadius + Math.sin(pulsePhase) * (cellSize / 10);
+            if (!ctx) {
+                console.log('Cannot draw player: ctx is null');
+                return;
+            }
             
-            ctx.fillStyle = '#48bb78';
+            const x = playerX * cellSize + cellSize / 2;
+            const y = playerY * cellSize + cellSize / 2;
+            const scale = cellSize / 40;
+            
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+            
+            ctx.shadowColor = '#000000';
+            ctx.shadowBlur = 15;
+            
+            ctx.fillStyle = '#4ade80';
             ctx.beginPath();
-            ctx.arc(centerX, centerY, pulseRadius, 0, Math.PI * 2);
+            ctx.arc(0, 0, 18, 0, Math.PI * 2);
             ctx.fill();
             
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.arc(centerX - cellSize / 6, centerY - cellSize / 6, pulseRadius / 3, 0, Math.PI * 2);
+            ctx.arc(-5, -3, 5, 0, Math.PI * 2);
+            ctx.arc(5, -3, 5, 0, Math.PI * 2);
             ctx.fill();
             
-            pulsePhase += 0.1;
+            ctx.fillStyle = '#1a1a1a';
+            ctx.beginPath();
+            ctx.arc(-5, -2, 2.5, 0, Math.PI * 2);
+            ctx.arc(5, -2, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#f97316';
+            ctx.beginPath();
+            ctx.arc(0, 3, 4, 0, Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = '#fca5a5';
+            ctx.beginPath();
+            ctx.arc(-10, 2, 4, 0, Math.PI * 2);
+            ctx.arc(10, 2, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+
+        function updateTrail(x, y) {
+            trailParticles.push({
+                x, y,
+                radius: cellSize / 6,
+                opacity: 0.6,
+                age: 0
+            });
+
+            trailParticles = trailParticles.filter(p => p.age < 1);
+            trailParticles.forEach(p => {
+                p.age += 0.05;
+                p.opacity = 0.6 * (1 - p.age);
+                p.radius *= 0.95;
+            });
+        }
+
+        function drawTrail() {
+            const theme = THEME_CONFIG[currentTheme];
+            trailParticles.forEach(p => {
+                ctx.fillStyle = theme.playerColor + Math.floor(p.opacity * 255).toString(16).padStart(2, '0');
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function adjustColor(color, amount) {
+            const hex = color.replace('#', '');
+            const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
+            const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
+            const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
+            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        }
+
+        function easeOutQuad(t) {
+            return t * (2 - t);
         }
 
         function render() {
             drawMaze();
-            drawPlayer();
+            if (!gamePaused && !gameOver) {
+                drawPlayer();
+            }
             animationFrame = requestAnimationFrame(render);
         }
 
@@ -251,50 +936,250 @@
         }
 
         function movePlayer(dx, dy) {
-            if (gameWon) return;
-            
+            if (gameWon || gameOver || gamePaused) return;
+
             if (!gameStarted) {
                 startGame();
             }
-            
+
             const newX = playerX + dx;
             const newY = playerY + dy;
-            
+
             if (canMove(newX, newY)) {
                 playerX = newX;
                 playerY = newY;
                 steps++;
                 stepsDisplay.textContent = steps;
+                checkCollectibles();
+                updateScore();
                 checkWin();
             }
+        }
+
+        function moveMonster() {
+            if (gamePaused || !gameStarted) return;
+
+            const dx = playerX - monsterX;
+            const dy = playerY - monsterY;
+            const absDx = Math.abs(dx);
+            const absDy = Math.abs(dy);
+
+            let newMonsterX = monsterX;
+            let newMonsterY = monsterY;
+
+            if (absDx > absDy) {
+                newMonsterX += dx > 0 ? 1 : -1;
+            } else {
+                newMonsterY += dy > 0 ? 1 : -1;
+            }
+
+            if (canMove(newMonsterX, newMonsterY)) {
+                monsterX = newMonsterX;
+                monsterY = newMonsterY;
+            } else {
+                const directions = [
+                    { dx: 0, dy: -1 },
+                    { dx: 1, dy: 0 },
+                    { dx: 0, dy: 1 },
+                    { dx: -1, dy: 0 }
+                ];
+                const validDirections = directions.filter(d => canMove(monsterX + d.dx, monsterY + d.dy));
+                if (validDirections.length > 0) {
+                    const randomDir = validDirections[Math.floor(Math.random() * validDirections.length)];
+                    monsterX += randomDir.dx;
+                    monsterY += randomDir.dy;
+                }
+            }
+
+            checkMonsterCollision();
+            updateMonsterWarning();
+        }
+
+        function checkMonsterCollision() {
+            if (playerX === monsterX && playerY === monsterY) {
+                lives--;
+                updateLivesDisplay();
+                
+                if (lives <= 0) {
+                    gameOver = true;
+                    stopTimer();
+                    stopMonster();
+                    gameOverReason.textContent = '被怪物抓住了！';
+                    finalScoreDisplay.textContent = `得分: ${score}`;
+                    setTimeout(() => {
+                        gameOverOverlay.classList.remove('hidden');
+                    }, 300);
+                } else {
+                    resetMonsterPosition();
+                    canvas.classList.add('damage-flash');
+                    setTimeout(() => {
+                        canvas.classList.remove('damage-flash');
+                    }, 500);
+                }
+            }
+        }
+
+        function resetMonsterPosition() {
+            const paths = [];
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    if (maze[y][x] === 0 && !(x === playerX && y === playerY)) {
+                        const dist = Math.abs(x - playerX) + Math.abs(y - playerY);
+                        if (dist > gridSize / 3) {
+                            paths.push({ x, y });
+                        }
+                    }
+                }
+            }
+            if (paths.length > 0) {
+                const pos = paths[Math.floor(Math.random() * paths.length)];
+                monsterX = pos.x;
+                monsterY = pos.y;
+            }
+        }
+
+        function updateMonsterWarning() {
+            const distance = Math.abs(playerX - monsterX) + Math.abs(playerY - monsterY);
+            if (distance <= 4) {
+                monsterWarning.classList.remove('hidden');
+                monsterDistance.textContent = `怪物就在附近！距离: ${distance}`;
+            } else if (distance <= 6) {
+                monsterWarning.classList.remove('hidden');
+                monsterDistance.textContent = '怪物正在接近！';
+            } else {
+                monsterWarning.classList.add('hidden');
+            }
+        }
+
+        function checkCollectibles() {
+            collectibles.forEach(item => {
+                if (!item.collected && item.x === playerX && item.y === playerY) {
+                    item.collected = true;
+                    let points = 0;
+                    if (item.type === 'coin') {
+                        coinsCollected++;
+                        points = 100;
+                        updateCollectibleDisplay('coinCollectible', coinsCollected, DIFFICULTY_CONFIG[currentDifficulty].coinCount);
+                    } else if (item.type === 'gem') {
+                        gemsCollected++;
+                        points = 200;
+                        updateCollectibleDisplay('gemCollectible', gemsCollected, DIFFICULTY_CONFIG[currentDifficulty].gemCount);
+                    } else if (item.type === 'heart') {
+                        heartCollected = true;
+                        points = 500;
+                        if (lives < 3) {
+                            lives++;
+                            updateLivesDisplay();
+                        }
+                        updateCollectibleDisplay('heartCollectible', 1, 1);
+                    }
+                    score += points;
+                    scoreDisplay.textContent = score;
+                    showFloatingScore(points);
+                }
+            });
+        }
+
+        function updateCollectibleDisplay(id, collected, total) {
+            const el = document.getElementById(id);
+            el.querySelector('span').textContent = `${collected}/${total}`;
+            if (collected >= total) {
+                el.classList.add('collected');
+            }
+        }
+
+        function updateLivesDisplay() {
+            livesDisplay.textContent = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
+        }
+
+        function updateScore() {
+            if (!gameStarted) {
+                score = 0;
+                scoreDisplay.textContent = score;
+                return;
+            }
+            const config = DIFFICULTY_CONFIG[currentDifficulty];
+            const timeBonus = Math.max(0, 300 - elapsedSeconds) * 2;
+            const stepPenalty = steps * 5;
+            const baseScore = 1000;
+            const collectibleBonus = coinsCollected * 100 + gemsCollected * 200 + (heartCollected ? 500 : 0);
+            score = Math.max(0, Math.floor((baseScore + timeBonus - stepPenalty + collectibleBonus) * config.scoreMultiplier));
+            scoreDisplay.textContent = score;
+        }
+
+        function showFloatingScore(points) {
+            floatingScore.textContent = `+${points}`;
+            floatingScore.style.left = '50%';
+            floatingScore.style.top = '40%';
+            floatingScore.style.opacity = '1';
+            floatingScore.classList.add('float-up');
+            setTimeout(() => {
+                floatingScore.classList.remove('float-up');
+                floatingScore.style.opacity = '0';
+            }, 1200);
         }
 
         function checkWin() {
             if (playerX === endX && playerY === endY) {
                 gameWon = true;
                 stopTimer();
+                stopMonster();
                 finalTime.textContent = formatTime(elapsedSeconds);
                 finalSteps.textContent = steps;
-                winModal.classList.remove('hidden');
+                finalScore.textContent = score;
+                finalCoins.textContent = `${coinsCollected}/${DIFFICULTY_CONFIG[currentDifficulty].coinCount}`;
+                finalGems.textContent = `${gemsCollected}/${DIFFICULTY_CONFIG[currentDifficulty].gemCount}`;
+                finalHearts.textContent = heartCollected ? '1/1' : '0/1';
+
+                if (score > highScore) {
+                    highScore = score;
+                    highScoreDisplay.textContent = highScore;
+                    localStorage.setItem('mazeHighScore', highScore);
+                    newRecord.classList.remove('hidden');
+                } else {
+                    newRecord.classList.add('hidden');
+                }
+
+                saveToLeaderboard();
+                setTimeout(() => {
+                    winModal.classList.remove('hidden');
+                }, 500);
             }
         }
 
         function startGame() {
+            if (gameStarted || !canStartGame) return;
             gameStarted = true;
+            console.log('Game started!');
             startTimer();
+            startMonster();
+            startOverlay.classList.add('hidden');
         }
 
         function startTimer() {
             timerInterval = setInterval(() => {
                 elapsedSeconds++;
                 timerDisplay.textContent = formatTime(elapsedSeconds);
+                updateScore();
             }, 1000);
+        }
+
+        function startMonster() {
+            const speed = DIFFICULTY_CONFIG[currentDifficulty].monsterSpeed;
+            monsterInterval = setInterval(moveMonster, speed);
         }
 
         function stopTimer() {
             if (timerInterval) {
                 clearInterval(timerInterval);
                 timerInterval = null;
+            }
+        }
+
+        function stopMonster() {
+            if (monsterInterval) {
+                clearInterval(monsterInterval);
+                monsterInterval = null;
             }
         }
 
@@ -306,15 +1191,38 @@
 
         function resetGame() {
             stopTimer();
+            stopMonster();
             playerX = 1;
             playerY = 1;
             steps = 0;
+            score = 0;
+            lives = 3;
+            coinsCollected = 0;
+            gemsCollected = 0;
+            heartCollected = false;
             elapsedSeconds = 0;
             gameStarted = false;
             gameWon = false;
+            gameOver = false;
+            gamePaused = false;
+            trailParticles = [];
             timerDisplay.textContent = '00:00';
             stepsDisplay.textContent = '0';
+            scoreDisplay.textContent = '0';
+            updateLivesDisplay();
+            pauseOverlay.classList.add('hidden');
+            gameOverOverlay.classList.add('hidden');
+            startOverlay.classList.remove('hidden');
+            monsterWarning.classList.add('hidden');
+            document.getElementById('coinCollectible').querySelector('span').textContent = '0/3';
+            document.getElementById('gemCollectible').querySelector('span').textContent = '0/2';
+            document.getElementById('heartCollectible').querySelector('span').textContent = '0/1';
+            document.getElementById('coinCollectible').classList.remove('collected');
+            document.getElementById('gemCollectible').classList.remove('collected');
+            document.getElementById('heartCollectible').classList.remove('collected');
             generateMaze();
+            canStartGame = true;
+            drawMaze();
         }
 
         function startNewGame(difficulty) {
@@ -326,17 +1234,138 @@
             resetGame();
         }
 
-        function handleKeyDown(e) {
-            const keyMap = {
-                'ArrowUp': [0, -1], 'KeyW': [0, -1],
-                'ArrowDown': [0, 1], 'KeyS': [0, 1],
-                'ArrowLeft': [-1, 0], 'KeyA': [-1, 0],
-                'ArrowRight': [1, 0], 'KeyD': [1, 0]
+        function togglePause() {
+            if (gameWon || gameOver || !gameStarted) return;
+            gamePaused = !gamePaused;
+            if (gamePaused) {
+                stopTimer();
+                stopMonster();
+                pauseOverlay.classList.remove('hidden');
+            } else {
+                startTimer();
+                startMonster();
+                pauseOverlay.classList.add('hidden');
+            }
+        }
+
+        function setTheme(themeName) {
+            body.classList.remove(THEME_CONFIG[currentTheme].bgClass);
+            currentTheme = themeName;
+            body.classList.add(THEME_CONFIG[currentTheme].bgClass);
+            localStorage.setItem('mazeTheme', currentTheme);
+            themeBtn1.classList.toggle('active', themeName === 'default');
+            themeBtn2.classList.toggle('active', themeName === 'ocean');
+            themeBtn3.classList.toggle('active', themeName === 'forest');
+        }
+
+        function loadHighScore() {
+            const saved = localStorage.getItem('mazeHighScore');
+            highScore = saved ? parseInt(saved) : 0;
+            highScoreDisplay.textContent = highScore;
+        }
+
+        function loadTheme() {
+            const saved = localStorage.getItem('mazeTheme');
+            currentTheme = saved || 'default';
+            body.classList.add(THEME_CONFIG[currentTheme].bgClass);
+            themeBtn1.classList.toggle('active', currentTheme === 'default');
+            themeBtn2.classList.toggle('active', currentTheme === 'ocean');
+            themeBtn3.classList.toggle('active', currentTheme === 'forest');
+        }
+
+        function loadLeaderboard() {
+            const saved = localStorage.getItem('mazeLeaderboard');
+            leaderboard = saved ? JSON.parse(saved) : [];
+        }
+
+        function saveToLeaderboard() {
+            const record = {
+                score: score,
+                time: elapsedSeconds,
+                steps: steps,
+                coins: coinsCollected,
+                gems: gemsCollected,
+                heart: heartCollected,
+                lives: lives,
+                difficulty: currentDifficulty,
+                date: new Date().toLocaleDateString('zh-CN')
             };
-            
-            if (keyMap[e.code]) {
+            leaderboard.push(record);
+            leaderboard.sort((a, b) => b.score - a.score);
+            leaderboard = leaderboard.slice(0, 10);
+            localStorage.setItem('mazeLeaderboard', JSON.stringify(leaderboard));
+        }
+
+        function showLeaderboard() {
+            loadLeaderboard();
+            if (leaderboard.length === 0) {
+                leaderboardList.innerHTML = `
+                    <div class="text-center text-gray-400 py-8">
+                        <div class="text-4xl mb-2">📊</div>
+                        <div>暂无记录</div>
+                    </div>
+                `;
+            } else {
+                let html = '';
+                leaderboard.forEach((record, index) => {
+                    const medals = ['🥇', '🥈', '🥉'];
+                    const difficultyNames = { easy: '简单', medium: '中等', hard: '困难' };
+                    html += `
+                        <div class="leaderboard-item flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">${medals[index] || '🎯'}</span>
+                                <div>
+                                    <div class="font-bold text-gray-800 text-lg">${record.score}</div>
+                                    <div class="text-xs text-gray-500">${difficultyNames[record.difficulty]} · ${record.date}</div>
+                                </div>
+                            </div>
+                            <div class="text-right text-sm text-gray-600">
+                                <div>${formatTime(record.time)}</div>
+                                <div>${record.steps}步 · 🪙${record.coins} 💎${record.gems} ${record.heart ? '❤️' : ''}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                leaderboardList.innerHTML = html;
+            }
+            leaderboardModal.classList.remove('hidden');
+        }
+
+        function clearLeaderboard() {
+            if (confirm('确定要清空所有记录吗？')) {
+                leaderboard = [];
+                localStorage.removeItem('mazeLeaderboard');
+                leaderboardList.innerHTML = `
+                    <div class="text-center text-gray-400 py-8">
+                        <div class="text-4xl mb-2">📊</div>
+                        <div>暂无记录</div>
+                    </div>
+                `;
+            }
+        }
+
+        function handleKeyDown(e) {
+            if (e.key === ' ' || e.code === 'Space') {
                 e.preventDefault();
-                const [dx, dy] = keyMap[e.code];
+                if (winModal.classList.contains('hidden') && leaderboardModal.classList.contains('hidden') && helpModal.classList.contains('hidden')) {
+                    togglePause();
+                }
+                return;
+            }
+
+            let dx = 0, dy = 0;
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                dy = -1;
+            } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+                dy = 1;
+            } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                dx = -1;
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                dx = 1;
+            }
+
+            if (dx !== 0 || dy !== 0) {
+                e.preventDefault();
                 movePlayer(dx, dy);
             }
         }
@@ -348,13 +1377,13 @@
 
         function handleTouchEnd(e) {
             if (!touchStartX || !touchStartY) return;
-            
+
             const touchEndX = e.changedTouches[0].clientX;
             const touchEndY = e.changedTouches[0].clientY;
             const dx = touchEndX - touchStartX;
             const dy = touchEndY - touchStartY;
-            const minSwipe = 20;
-            
+            const minSwipe = 25;
+
             if (Math.abs(dx) > Math.abs(dy)) {
                 if (Math.abs(dx) > minSwipe) {
                     movePlayer(dx > 0 ? 1 : -1, 0);
@@ -364,16 +1393,29 @@
                     movePlayer(0, dy > 0 ? 1 : -1);
                 }
             }
-            
+
             touchStartX = 0;
             touchStartY = 0;
         }
+
+        startBtn.addEventListener('click', () => {
+            if (!gameStarted) {
+                startGame();
+            } else if (gamePaused) {
+                togglePause();
+            }
+        });
+
+        pauseBtn.addEventListener('click', togglePause);
 
         newGameBtn.addEventListener('click', () => {
             difficultyModal.classList.remove('hidden');
         });
 
-        restartBtn.addEventListener('click', () => {
+        restartBtn.addEventListener('click', resetGame);
+
+        restartAfterGameOverBtn.addEventListener('click', () => {
+            gameOverOverlay.classList.add('hidden');
             resetGame();
         });
 
@@ -381,6 +1423,31 @@
             winModal.classList.add('hidden');
             difficultyModal.classList.remove('hidden');
         });
+
+        backToMenuBtn.addEventListener('click', () => {
+            winModal.classList.add('hidden');
+            resetGame();
+        });
+
+        leaderboardBtn.addEventListener('click', showLeaderboard);
+
+        helpBtn.addEventListener('click', () => {
+            helpModal.classList.remove('hidden');
+        });
+
+        closeLeaderboardBtn.addEventListener('click', () => {
+            leaderboardModal.classList.add('hidden');
+        });
+
+        closeHelpBtn.addEventListener('click', () => {
+            helpModal.classList.add('hidden');
+        });
+
+        clearLeaderboardBtn.addEventListener('click', clearLeaderboard);
+
+        themeBtn1.addEventListener('click', () => setTheme('default'));
+        themeBtn2.addEventListener('click', () => setTheme('ocean'));
+        themeBtn3.addEventListener('click', () => setTheme('forest'));
 
         document.querySelectorAll('.difficulty-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -400,7 +1467,18 @@
             }
         });
 
-        startNewGame('easy');
+        loadHighScore();
+        loadTheme();
+        loadLeaderboard();
+        initCanvas();
+        console.log('After initCanvas: gridSize=', gridSize, 'cellSize=', cellSize, 'canvas size:', canvas.width, 'x', canvas.height);
+        generateMaze();
+        console.log('After generateMaze: maze size:', maze.length, 'x', maze[0]?.length);
+        canStartGame = true;
+        console.log('Before drawMaze: player at', playerX, playerY);
+        drawMaze();
+        drawPlayer();
+        console.log('Draw complete, starting render loop');
         render();
     </script>
 </body>
